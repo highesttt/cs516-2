@@ -49,7 +49,9 @@ int* makeRandArray(const int size, const int seed) {
 
 // --- KERNEL: Bitonic Sort ---
 __global__ void bitonicSortKernel(int* dev_values, int j, int k) {
-    unsigned int i, ixj;
+    unsigned int i;
+    unsigned int ixj;
+
     i = threadIdx.x + blockDim.x * blockIdx.x;
     ixj = i ^ j;
 
