@@ -16,7 +16,6 @@ TARGETS = thrust singlethread multithread
 
 # Defaults for testing
 TESTSIZE ?= 100000
-TESTSEED ?= 12345
 
 all: $(TARGETS)
 
