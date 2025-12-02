@@ -47,7 +47,6 @@ int* makeRandArray(const int size, const int seed) {
 
 // --- KERNEL: Single Threaded Bubble Sort ---
 __global__ void singleThreadSort(int* data, int n) {
-    // Only thread 0 in block 0 runs this code
     if (blockIdx.x == 0 && threadIdx.x == 0) {
         for (int i = 0; i < n - 1; i++) {
             for (int j = 0; j < n - i - 1; j++) {
@@ -101,7 +100,6 @@ int main(int argc, char* argv[]) {
     CudaSafeCall(
         cudaMemcpy(d_array, array, size * sizeof(int), cudaMemcpyHostToDevice));
 
-    // Launch with 1 block, 1 thread
     singleThreadSort<<<1, 1>>>(d_array, size);
     CudaCheckError();
 

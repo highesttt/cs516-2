@@ -49,8 +49,6 @@ int* makeRandArray(const int size, const int seed) {
     return array;
 }
 
-// NO KERNEL NEEDED FOR THRUST - LIBRARY HANDLES IT
-
 int main(int argc, char* argv[]) {
     int* array;
     int size, seed;
@@ -88,18 +86,15 @@ int main(int argc, char* argv[]) {
     cudaEventCreate(&stopTotal);
     cudaEventRecord(startTotal, 0);
 
-    // 1. Transfer to device
     thrust::device_vector<int> d_vec(array, array + size);
 
-    // 2. Sort using Thrust
     thrust::sort(d_vec.begin(), d_vec.end());
 
-    // 3. Transfer back to host (optional for timing, but needed for print)
     if (printSorted) {
         thrust::copy(d_vec.begin(), d_vec.end(), array);
     }
 
-    CudaCheckError();  // Check for errors
+    CudaCheckError();
 
     cudaEventRecord(stopTotal, 0);
     cudaEventSynchronize(stopTotal);

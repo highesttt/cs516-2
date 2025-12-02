@@ -49,25 +49,20 @@ int* makeRandArray(const int size, const int seed) {
 
 // --- KERNEL: Bitonic Sort ---
 __global__ void bitonicSortKernel(int* dev_values, int j, int k) {
-    unsigned int i, ixj; /* Sorting partners: i and ixj */
+    unsigned int i, ixj;
     i = threadIdx.x + blockDim.x * blockIdx.x;
     ixj = i ^ j;
 
-    /* The threads with the lowest ids sort the array. */
     if ((ixj) > i) {
         if ((i & k) == 0) {
-            /* Sort ascending */
             if (dev_values[i] > dev_values[ixj]) {
-                /* exchange(i, ixj); */
                 int temp = dev_values[i];
                 dev_values[i] = dev_values[ixj];
                 dev_values[ixj] = temp;
             }
         }
         if ((i & k) != 0) {
-            /* Sort descending */
             if (dev_values[i] < dev_values[ixj]) {
-                /* exchange(i, ixj); */
                 int temp = dev_values[i];
                 dev_values[i] = dev_values[ixj];
                 dev_values[ixj] = temp;
@@ -111,7 +106,6 @@ int main(int argc, char* argv[]) {
     cudaEventCreate(&stopTotal);
     cudaEventRecord(startTotal, 0);
 
-    // 1. Calculate Padding (Bitonic sort needs Power of 2)
     int padded_size = 1;
     while (padded_size < size)
         padded_size *= 2;
@@ -119,31 +113,26 @@ int main(int argc, char* argv[]) {
     int* d_array;
     CudaSafeCall(cudaMalloc(&d_array, padded_size * sizeof(int)));
 
-    // 2. Prepare data with padding (fill extra space with INT_MAX)
     int* host_padded = new int[padded_size];
     for (int i = 0; i < size; i++)
         host_padded[i] = array[i];
     for (int i = size; i < padded_size; i++)
-        host_padded[i] = INT_MAX;  // Padding
+        host_padded[i] = INT_MAX;
 
     CudaSafeCall(cudaMemcpy(d_array, host_padded, padded_size * sizeof(int),
                             cudaMemcpyHostToDevice));
 
-    // 3. Bitonic Sort Launch
     int threadsPerBlock = 256;
     int blocks = (padded_size + threadsPerBlock - 1) / threadsPerBlock;
     int j, k;
 
-    // Major step
     for (k = 2; k <= padded_size; k <<= 1) {
-        // Minor step
         for (j = k >> 1; j > 0; j = j >> 1) {
             bitonicSortKernel<<<blocks, threadsPerBlock>>>(d_array, j, k);
             CudaCheckError();
         }
     }
 
-    // 4. Copy back and un-pad
     CudaSafeCall(cudaMemcpy(host_padded, d_array, padded_size * sizeof(int),
                             cudaMemcpyDeviceToHost));
     for (int i = 0; i < size; i++)
